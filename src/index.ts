@@ -6,198 +6,142 @@ import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsDoc from 'swagger-jsdoc';
 
-// Load environment variables
+// Cargar variables de entorno
 dotenv.config();
 
-// Import services and repositories
+// Importar tus servicios, repositorios y rutas
+import { Logger } from './infrastructure/services/Logger';
+import { createAuthRoutes } from './presentation/routes/authRoutes';
+import { createChallengeRoutes } from './presentation/routes/challengeRoutes';
+import { createSubmissionRoutes } from './presentation/routes/submissionRoutes';
+import { ErrorHandler } from './presentation/middleware/errorHandler';
+import { AuthMiddleware } from './presentation/middleware/auth';
 import { AuthService } from './infrastructure/services/AuthService';
 import { JobQueueService } from './infrastructure/services/JobQueueService';
 import { RunnerService } from './infrastructure/services/RunnerService';
 import { AIAssistantService } from './infrastructure/services/AIAssistantService';
-import { Logger } from './infrastructure/services/Logger';
-
 import { MongoUserRepository } from './infrastructure/repositories/MongoUserRepository';
 import { MongoChallengeRepository } from './infrastructure/repositories/MongoChallengeRepository';
 import { MockCourseRepository } from './infrastructure/repositories/MockCourseRepository';
 import { MockSubmissionRepository } from './infrastructure/repositories/MockSubmissionRepository';
 import { MockLeaderboardRepository } from './infrastructure/repositories/MockLeaderboardRepository';
-
-// Import use cases
 import { LoginUseCase } from './application/use-cases/auth/LoginUseCase';
 import { RegisterUseCase } from './application/use-cases/auth/RegisterUseCase';
 import { CreateChallengeUseCase } from './application/use-cases/challenges/CreateChallengeUseCase';
 import { SubmitSolutionUseCase } from './application/use-cases/submissions/SubmitSolutionUseCase';
-
-// Import controllers
 import { AuthController } from './presentation/controllers/AuthController';
 import { ChallengeController } from './presentation/controllers/ChallengeController';
 import { SubmissionController } from './presentation/controllers/SubmissionController';
 
-// Import middleware
-import { AuthMiddleware } from './presentation/middleware/auth';
-import { ErrorHandler } from './presentation/middleware/errorHandler';
+const app = express();
+const logger = new Logger('Application');
 
-// Import routes
-import { createAuthRoutes } from './presentation/routes/authRoutes';
-import { createChallengeRoutes } from './presentation/routes/challengeRoutes';
-import { createSubmissionRoutes } from './presentation/routes/submissionRoutes';
+// 🧱 Middleware base
+app.use(helmet());
+app.use(cors({ origin: process.env.CORS_ORIGIN || '*', credentials: true }));
+app.use(compression());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-class Application {
-  private app: express.Application;
-  private logger: Logger;
+// 📈 Rate limit y logs
+app.use(rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'),
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
+  message: { success: false, message: 'Too many requests, try again later.' }
+}));
+app.use(morgan('combined', {
+  stream: { write: (msg: string) => logger.info(msg.trim()) }
+}));
 
-  constructor() {
-    this.app = express();
-    this.logger = new Logger('Application');
-    this.setupMiddleware();
-    this.setupRoutes();
-    this.setupErrorHandling();
-  }
+// 🧩 Instanciar dependencias
+const authService = new AuthService();
+const jobQueueService = new JobQueueService();
+const runnerService = new RunnerService();
+const aiAssistantService = new AIAssistantService();
 
-  private setupMiddleware(): void {
-    // Security middleware
-    this.app.use(helmet());
-    this.app.use(cors({
-      origin: process.env.CORS_ORIGIN || '*',
-      credentials: true
-    }));
+const userRepo = new MongoUserRepository();
+const challengeRepo = new MongoChallengeRepository();
+const courseRepo = new MockCourseRepository();
+const submissionRepo = new MockSubmissionRepository();
+const leaderboardRepo = new MockLeaderboardRepository();
 
-    // Rate limiting
-    const limiter = rateLimit({
-      windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-      max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
-      message: {
-        success: false,
-        message: 'Too many requests from this IP, please try again later.'
-      }
-    });
-    this.app.use(limiter);
+const loginUC = new LoginUseCase(userRepo, authService);
+const registerUC = new RegisterUseCase(userRepo, authService);
+const createChallengeUC = new CreateChallengeUseCase(challengeRepo, courseRepo);
+const submitSolutionUC = new SubmitSolutionUseCase(submissionRepo, challengeRepo, courseRepo, jobQueueService);
 
-    // Compression and parsing
-    this.app.use(compression());
-    this.app.use(express.json({ limit: '10mb' }));
-    this.app.use(express.urlencoded({ extended: true }));
+const authController = new AuthController(loginUC, registerUC, authService);
+const challengeController = new ChallengeController(createChallengeUC, challengeRepo);
+const submissionController = new SubmissionController(submitSolutionUC, submissionRepo);
 
-    // Logging
-    this.app.use(morgan('combined', {
-      stream: {
-        write: (message: string) => {
-          this.logger.info(message.trim());
-        }
-      }
-    }));
-  }
+const authMiddleware = new AuthMiddleware(authService);
 
-  private setupRoutes(): void {
-    // Initialize services
-    const authService = new AuthService();
-    const jobQueueService = new JobQueueService();
-    const runnerService = new RunnerService();
-    const aiAssistantService = new AIAssistantService();
+// ✅ Endpoints base
+app.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API running',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
 
-    // Initialize repositories
-    const userRepository = new MongoUserRepository();
-    const challengeRepository = new MongoChallengeRepository();
-    const courseRepository = new MockCourseRepository();
-    const submissionRepository = new MockSubmissionRepository();
-    const leaderboardRepository = new MockLeaderboardRepository();
+// 🚀 Montar rutas principales
+app.use('/api/auth', createAuthRoutes(authController));
+app.use('/api/challenges', createChallengeRoutes(challengeController, authMiddleware));
+app.use('/api/submissions', createSubmissionRoutes(submissionController, authMiddleware));
 
-    // Initialize use cases
-    const loginUseCase = new LoginUseCase(userRepository, authService);
-    const registerUseCase = new RegisterUseCase(userRepository, authService);
-    const createChallengeUseCase = new CreateChallengeUseCase(challengeRepository, courseRepository);
-    const submitSolutionUseCase = new SubmitSolutionUseCase(
-      submissionRepository,
-      challengeRepository,
-      courseRepository,
-      jobQueueService
-    );
-
-    // Initialize controllers
-    const authController = new AuthController(loginUseCase, registerUseCase, authService);
-    const challengeController = new ChallengeController(createChallengeUseCase, challengeRepository);
-    const submissionController = new SubmissionController(submitSolutionUseCase, submissionRepository);
-
-    // Initialize middleware
-    const authMiddleware = new AuthMiddleware(authService);
-
-    // Health check
-    this.app.get('/health', (req, res) => {
-      res.json({
-        success: true,
-        message: 'API is running',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-      });
-    });
-
-    // API routes
-    this.app.use('/api/auth', createAuthRoutes(authController));
-    this.app.use('/api/challenges', createChallengeRoutes(challengeController, authMiddleware));
-    this.app.use('/api/submissions', createSubmissionRoutes(submissionController, authMiddleware));
-
-    // Metrics endpoint
-    this.app.get('/api/metrics', (req, res) => {
-      res.json({
-        success: true,
-        data: {
-          submissions_total: 0, // This would be implemented with actual metrics
-          submissions_failed_total: 0,
-          average_execution_time_ms: 0,
-          active_runners: 0
-        }
-      });
-    });
-  }
-
-  private setupErrorHandling(): void {
-    // 404 handler
-    this.app.use(ErrorHandler.notFound);
-
-    // Global error handler
-    this.app.use(ErrorHandler.handle);
-  }
-
-  public async start(): Promise<void> {
-    try {
-      // Connect to MongoDB
-      const mongoUrl = process.env.DATABASE_URL || 'mongodb://localhost:27017/algorithmic-challenges';
-      await mongoose.connect(mongoUrl);
-      this.logger.info('Connected to MongoDB');
-
-      // Start server
-      const port = process.env.PORT || 3000;
-      this.app.listen(port, () => {
-        this.logger.info(`Server running on port ${port}`);
-        this.logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      });
-
-    } catch (error) {
-      this.logger.error('Failed to start application:', error);
-      // Only exit in production, not during tests
-      if (process.env.NODE_ENV !== 'test') {
-        process.exit(1);
-      }
-      throw error; // Re-throw for tests to handle
+// 📊 Endpoint de métricas (mock)
+app.get('/api/metrics', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      submissions_total: 0,
+      submissions_failed_total: 0,
+      average_execution_time_ms: 0,
+      active_runners: 0
     }
-  }
+  });
+});
 
-  public getApp(): express.Application {
-    return this.app;
-  }
-}
+// 📘 Swagger Docs
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Algorithmic Challenges API',
+      version: '1.0.0',
+      description: 'Documentación interactiva de la API para la plataforma de retos algorítmicos',
+    },
+    servers: [{ url: 'http://localhost:3000', description: 'Servidor local' }],
+  },
+  apis: ['./src/presentation/routes/*.ts'], // ⚠️ Ajusta si tus rutas están en otra carpeta
+};
+const swaggerSpecs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
-// Start the application
-const app = new Application();
+// ⚠️ Manejo de errores
+app.use(ErrorHandler.notFound);
+app.use(ErrorHandler.handle);
 
-// Only start automatically if not in test environment
-if (process.env.NODE_ENV !== 'test') {
-  app.start().catch((error) => {
-    console.error('Failed to start application:', error);
+// 🔌 Conexión a Mongo y arranque
+const PORT = process.env.PORT || 3000;
+const DATABASE_URL = process.env.DATABASE_URL || 'mongodb://localhost:27017/algorithmic-challenges';
+
+mongoose.connect(DATABASE_URL)
+  .then(() => {
+    logger.info('Connected to MongoDB');
+    app.listen(PORT, () => {
+      logger.info(`Server running on port ${PORT}`);
+      logger.info(`Swagger disponible en http://localhost:${PORT}/api-docs`);
+    });
+  })
+  .catch((err) => {
+    logger.error('Error connecting to MongoDB', err);
     process.exit(1);
   });
-}
 
 export default app;
-
