@@ -1,0 +1,152 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.JavaScriptRunner = void 0;
+const child_process_1 = require("child_process");
+const Submission_1 = require("../domain/entities/Submission");
+class JavaScriptRunner {
+    async execute(config) {
+        const testCaseResults = [];
+        let totalTime = 0;
+        let totalMemory = 0;
+        let passedTests = 0;
+        for (const testCase of config.testCases) {
+            const result = await this.runTestCase(config.code, testCase, config.timeLimit);
+            testCaseResults.push(result);
+            totalTime += result.timeMs;
+            totalMemory += result.memoryKb;
+            if (result.status === 'OK') {
+                passedTests++;
+            }
+        }
+        const score = config.testCases.length > 0 ? (passedTests / config.testCases.length) * 100 : 0;
+        const status = score === 100 ? Submission_1.SubmissionStatus.ACCEPTED : Submission_1.SubmissionStatus.WRONG_ANSWER;
+        return {
+            status,
+            score,
+            timeMsTotal: totalTime,
+            memoryKbTotal: totalMemory,
+            testCaseResults
+        };
+    }
+    async runTestCase(code, testCase, timeLimit) {
+        return new Promise((resolve) => {
+            const startTime = Date.now();
+            const fs = require('fs');
+            const path = require('path');
+            const tempDir = '/tmp';
+            const fileName = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.js`;
+            const filePath = path.join(tempDir, fileName);
+            try {
+                const wrappedCode = `
+const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+${code}
+
+rl.on('line', (input) => {
+  // Process input and call the main function
+  try {
+    const result = main(input);
+    console.log(result);
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+  rl.close();
+});
+`;
+                fs.writeFileSync(filePath, wrappedCode);
+                const docker = (0, child_process_1.spawn)('docker', [
+                    'run',
+                    '--rm',
+                    '--network', 'none',
+                    '--cpus', '0.5',
+                    '--memory', '512m',
+                    '--read-only',
+                    '--tmpfs', '/tmp:rw,size=100m',
+                    '--timeout', Math.ceil(timeLimit / 1000).toString(),
+                    'node:18-alpine',
+                    'node', filePath
+                ], {
+                    stdio: ['pipe', 'pipe', 'pipe']
+                });
+                let output = '';
+                let error = '';
+                docker.stdout.on('data', (data) => {
+                    output += data.toString();
+                });
+                docker.stderr.on('data', (data) => {
+                    error += data.toString();
+                });
+                docker.on('close', (code) => {
+                    const endTime = Date.now();
+                    const executionTime = endTime - startTime;
+                    try {
+                        if (fs.existsSync(filePath)) {
+                            fs.unlinkSync(filePath);
+                        }
+                    }
+                    catch (e) {
+                    }
+                    if (code !== 0) {
+                        resolve({
+                            caseId: testCase.id,
+                            status: Submission_1.SubmissionStatus.RUNTIME_ERROR,
+                            timeMs: executionTime,
+                            memoryKb: 0,
+                            errorMessage: error || 'Process exited with non-zero code'
+                        });
+                    }
+                    else {
+                        const isCorrect = output.trim() === testCase.expectedOutput.trim();
+                        resolve({
+                            caseId: testCase.id,
+                            status: isCorrect ? 'OK' : Submission_1.SubmissionStatus.WRONG_ANSWER,
+                            timeMs: executionTime,
+                            memoryKb: 0,
+                            actualOutput: output.trim(),
+                            expectedOutput: testCase.expectedOutput.trim()
+                        });
+                    }
+                });
+                docker.on('error', (err) => {
+                    const endTime = Date.now();
+                    const executionTime = endTime - startTime;
+                    resolve({
+                        caseId: testCase.id,
+                        status: Submission_1.SubmissionStatus.RUNTIME_ERROR,
+                        timeMs: executionTime,
+                        memoryKb: 0,
+                        errorMessage: err.message
+                    });
+                });
+                docker.stdin.write(testCase.input);
+                docker.stdin.end();
+                setTimeout(() => {
+                    docker.kill('SIGKILL');
+                    resolve({
+                        caseId: testCase.id,
+                        status: Submission_1.SubmissionStatus.TIME_LIMIT_EXCEEDED,
+                        timeMs: timeLimit,
+                        memoryKb: 0,
+                        errorMessage: 'Time limit exceeded'
+                    });
+                }, timeLimit);
+            }
+            catch (error) {
+                resolve({
+                    caseId: testCase.id,
+                    status: Submission_1.SubmissionStatus.RUNTIME_ERROR,
+                    timeMs: 0,
+                    memoryKb: 0,
+                    errorMessage: error instanceof Error ? error.message : 'Unknown error'
+                });
+            }
+        });
+    }
+}
+exports.JavaScriptRunner = JavaScriptRunner;
+//# sourceMappingURL=javascript-runner.js.map

@@ -1,0 +1,168 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RunnerService = void 0;
+const child_process_1 = require("child_process");
+const Submission_1 = require("../../domain/entities/Submission");
+class RunnerService {
+    constructor() {
+        this.supportedLanguages = [
+            Submission_1.ProgrammingLanguage.PYTHON,
+            Submission_1.ProgrammingLanguage.JAVASCRIPT,
+            Submission_1.ProgrammingLanguage.CPP,
+            Submission_1.ProgrammingLanguage.JAVA
+        ];
+    }
+    async executeCode(config) {
+        if (!this.isLanguageSupported(config.language)) {
+            throw new Error(`Language ${config.language} is not supported`);
+        }
+        try {
+            switch (config.language) {
+                case Submission_1.ProgrammingLanguage.PYTHON:
+                    return await this.executePython(config);
+                case Submission_1.ProgrammingLanguage.JAVASCRIPT:
+                    return await this.executeJavaScript(config);
+                case Submission_1.ProgrammingLanguage.CPP:
+                    return await this.executeCpp(config);
+                case Submission_1.ProgrammingLanguage.JAVA:
+                    return await this.executeJava(config);
+                default:
+                    throw new Error(`Execution not implemented for ${config.language}`);
+            }
+        }
+        catch (error) {
+            return {
+                status: Submission_1.SubmissionStatus.RUNTIME_ERROR,
+                score: 0,
+                timeMsTotal: 0,
+                memoryKbTotal: 0,
+                testCaseResults: [],
+                errorMessage: error instanceof Error ? error.message : 'Unknown error'
+            };
+        }
+    }
+    async executePython(config) {
+        const testCaseResults = [];
+        let totalTime = 0;
+        let totalMemory = 0;
+        let passedTests = 0;
+        for (const testCase of config.testCases) {
+            const result = await this.runPythonTestCase(config.code, testCase, config.timeLimit);
+            testCaseResults.push(result);
+            totalTime += result.timeMs;
+            totalMemory += result.memoryKb;
+            if (result.status === 'OK') {
+                passedTests++;
+            }
+        }
+        const score = config.testCases.length > 0 ? (passedTests / config.testCases.length) * 100 : 0;
+        const status = score === 100 ? Submission_1.SubmissionStatus.ACCEPTED : Submission_1.SubmissionStatus.WRONG_ANSWER;
+        return {
+            status,
+            score,
+            timeMsTotal: totalTime,
+            memoryKbTotal: totalMemory,
+            testCaseResults
+        };
+    }
+    async executeJavaScript(config) {
+        return this.executePython(config);
+    }
+    async executeCpp(config) {
+        return this.executePython(config);
+    }
+    async executeJava(config) {
+        return this.executePython(config);
+    }
+    async runPythonTestCase(code, testCase, timeLimit) {
+        return new Promise((resolve) => {
+            const startTime = Date.now();
+            const fs = require('fs');
+            const path = require('path');
+            const tempDir = '/tmp';
+            const fileName = `temp_${Date.now()}.py`;
+            const filePath = path.join(tempDir, fileName);
+            try {
+                fs.writeFileSync(filePath, code);
+                const python = (0, child_process_1.spawn)('python3', [filePath], {
+                    stdio: ['pipe', 'pipe', 'pipe'],
+                    timeout: timeLimit
+                });
+                let output = '';
+                let error = '';
+                python.stdout.on('data', (data) => {
+                    output += data.toString();
+                });
+                python.stderr.on('data', (data) => {
+                    error += data.toString();
+                });
+                python.on('close', (code) => {
+                    const endTime = Date.now();
+                    const executionTime = endTime - startTime;
+                    try {
+                        fs.unlinkSync(filePath);
+                    }
+                    catch (e) {
+                    }
+                    if (code !== 0) {
+                        resolve({
+                            caseId: testCase.id,
+                            status: Submission_1.SubmissionStatus.RUNTIME_ERROR,
+                            timeMs: executionTime,
+                            memoryKb: 0,
+                            errorMessage: error
+                        });
+                    }
+                    else {
+                        const isCorrect = output.trim() === testCase.expectedOutput.trim();
+                        resolve({
+                            caseId: testCase.id,
+                            status: isCorrect ? 'OK' : Submission_1.SubmissionStatus.WRONG_ANSWER,
+                            timeMs: executionTime,
+                            memoryKb: 0,
+                            actualOutput: output.trim(),
+                            expectedOutput: testCase.expectedOutput.trim()
+                        });
+                    }
+                });
+                python.on('error', (err) => {
+                    const endTime = Date.now();
+                    const executionTime = endTime - startTime;
+                    resolve({
+                        caseId: testCase.id,
+                        status: Submission_1.SubmissionStatus.RUNTIME_ERROR,
+                        timeMs: executionTime,
+                        memoryKb: 0,
+                        errorMessage: err.message
+                    });
+                });
+                python.stdin.write(testCase.input);
+                python.stdin.end();
+            }
+            catch (error) {
+                resolve({
+                    caseId: testCase.id,
+                    status: Submission_1.SubmissionStatus.RUNTIME_ERROR,
+                    timeMs: 0,
+                    memoryKb: 0,
+                    errorMessage: error instanceof Error ? error.message : 'Unknown error'
+                });
+            }
+        });
+    }
+    isLanguageSupported(language) {
+        return this.supportedLanguages.includes(language);
+    }
+    getSupportedLanguages() {
+        return [...this.supportedLanguages];
+    }
+    async getRunnerStats() {
+        return {
+            activeRunners: 0,
+            totalExecutions: 0,
+            averageExecutionTime: 0
+        };
+    }
+}
+exports.RunnerService = RunnerService;
+//# sourceMappingURL=RunnerService.js.map

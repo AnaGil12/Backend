@@ -1,0 +1,1 @@
+{"version":3,"file":"cpp-runner.d.ts","sourceRoot":"","sources":["../../src/runners/cpp-runner.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,YAAY,EAAE,YAAY,EAAE,MAAM,mCAAmC,CAAC;AAG/E,qBAAa,SAAS;IACd,OAAO,CAAC,MAAM,EAAE,YAAY,GAAG,OAAO,CAAC,YAAY,CAAC;YA6B5C,WAAW;CAmJ1B"}

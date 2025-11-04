@@ -1,0 +1,1 @@
+{"version":3,"file":"python-runner.d.ts","sourceRoot":"","sources":["../../src/runners/python-runner.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,YAAY,EAAE,YAAY,EAAE,MAAM,mCAAmC,CAAC;AAG/E,qBAAa,YAAY;IACjB,OAAO,CAAC,MAAM,EAAE,YAAY,GAAG,OAAO,CAAC,YAAY,CAAC;YA6B5C,WAAW;CAmH1B"}

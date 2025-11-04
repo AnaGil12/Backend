@@ -1,0 +1,163 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CppRunner = void 0;
+const child_process_1 = require("child_process");
+const Submission_1 = require("../domain/entities/Submission");
+class CppRunner {
+    async execute(config) {
+        const testCaseResults = [];
+        let totalTime = 0;
+        let totalMemory = 0;
+        let passedTests = 0;
+        for (const testCase of config.testCases) {
+            const result = await this.runTestCase(config.code, testCase, config.timeLimit);
+            testCaseResults.push(result);
+            totalTime += result.timeMs;
+            totalMemory += result.memoryKb;
+            if (result.status === 'OK') {
+                passedTests++;
+            }
+        }
+        const score = config.testCases.length > 0 ? (passedTests / config.testCases.length) * 100 : 0;
+        const status = score === 100 ? Submission_1.SubmissionStatus.ACCEPTED : Submission_1.SubmissionStatus.WRONG_ANSWER;
+        return {
+            status,
+            score,
+            timeMsTotal: totalTime,
+            memoryKbTotal: totalMemory,
+            testCaseResults
+        };
+    }
+    async runTestCase(code, testCase, timeLimit) {
+        return new Promise((resolve) => {
+            const startTime = Date.now();
+            const fs = require('fs');
+            const path = require('path');
+            const tempDir = '/tmp';
+            const fileName = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.cpp`;
+            const executableName = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const filePath = path.join(tempDir, fileName);
+            const executablePath = path.join(tempDir, executableName);
+            try {
+                const wrappedCode = `
+#include <iostream>
+#include <string>
+using namespace std;
+
+${code}
+
+int main() {
+    string input;
+    getline(cin, input);
+    cout << main(input) << endl;
+    return 0;
+}
+`;
+                fs.writeFileSync(filePath, wrappedCode);
+                const docker = (0, child_process_1.spawn)('docker', [
+                    'run',
+                    '--rm',
+                    '--network', 'none',
+                    '--cpus', '0.5',
+                    '--memory', '512m',
+                    '--read-only',
+                    '--tmpfs', '/tmp:rw,size=100m',
+                    '--timeout', Math.ceil(timeLimit / 1000).toString(),
+                    'gcc:latest',
+                    'sh', '-c', `
+            cd /tmp &&
+            g++ -o ${executableName} ${fileName} -std=c++17 -O2 -Wall -Wextra &&
+            echo "${testCase.input}" | ./${executableName}
+          `
+                ], {
+                    stdio: ['pipe', 'pipe', 'pipe']
+                });
+                let output = '';
+                let error = '';
+                docker.stdout.on('data', (data) => {
+                    output += data.toString();
+                });
+                docker.stderr.on('data', (data) => {
+                    error += data.toString();
+                });
+                docker.on('close', (code) => {
+                    const endTime = Date.now();
+                    const executionTime = endTime - startTime;
+                    try {
+                        if (fs.existsSync(filePath)) {
+                            fs.unlinkSync(filePath);
+                        }
+                        if (fs.existsSync(executablePath)) {
+                            fs.unlinkSync(executablePath);
+                        }
+                    }
+                    catch (e) {
+                    }
+                    if (code !== 0) {
+                        if (error.includes('error:') || error.includes('Error:')) {
+                            resolve({
+                                caseId: testCase.id,
+                                status: Submission_1.SubmissionStatus.COMPILATION_ERROR,
+                                timeMs: executionTime,
+                                memoryKb: 0,
+                                errorMessage: error
+                            });
+                        }
+                        else {
+                            resolve({
+                                caseId: testCase.id,
+                                status: Submission_1.SubmissionStatus.RUNTIME_ERROR,
+                                timeMs: executionTime,
+                                memoryKb: 0,
+                                errorMessage: error || 'Process exited with non-zero code'
+                            });
+                        }
+                    }
+                    else {
+                        const isCorrect = output.trim() === testCase.expectedOutput.trim();
+                        resolve({
+                            caseId: testCase.id,
+                            status: isCorrect ? 'OK' : Submission_1.SubmissionStatus.WRONG_ANSWER,
+                            timeMs: executionTime,
+                            memoryKb: 0,
+                            actualOutput: output.trim(),
+                            expectedOutput: testCase.expectedOutput.trim()
+                        });
+                    }
+                });
+                docker.on('error', (err) => {
+                    const endTime = Date.now();
+                    const executionTime = endTime - startTime;
+                    resolve({
+                        caseId: testCase.id,
+                        status: Submission_1.SubmissionStatus.RUNTIME_ERROR,
+                        timeMs: executionTime,
+                        memoryKb: 0,
+                        errorMessage: err.message
+                    });
+                });
+                setTimeout(() => {
+                    docker.kill('SIGKILL');
+                    resolve({
+                        caseId: testCase.id,
+                        status: Submission_1.SubmissionStatus.TIME_LIMIT_EXCEEDED,
+                        timeMs: timeLimit,
+                        memoryKb: 0,
+                        errorMessage: 'Time limit exceeded'
+                    });
+                }, timeLimit);
+            }
+            catch (error) {
+                resolve({
+                    caseId: testCase.id,
+                    status: Submission_1.SubmissionStatus.RUNTIME_ERROR,
+                    timeMs: 0,
+                    memoryKb: 0,
+                    errorMessage: error instanceof Error ? error.message : 'Unknown error'
+                });
+            }
+        });
+    }
+}
+exports.CppRunner = CppRunner;
+//# sourceMappingURL=cpp-runner.js.map
