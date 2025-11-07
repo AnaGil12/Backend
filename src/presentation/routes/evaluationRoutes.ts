@@ -69,7 +69,7 @@ export function createEvaluationRoutes(
    */
   router.post(
     '/',
-    authMiddleware.authorize(UserRole.PROFESSOR),
+    authMiddleware.authorize(UserRole.PROFESSOR, UserRole.ADMIN),
     ValidationMiddleware.validate(EvaluationSchemas.create),
     ErrorHandler.asyncHandler(evaluationController.createEvaluation.bind(evaluationController))
   );
@@ -194,7 +194,7 @@ export function createEvaluationRoutes(
   router.delete(
     '/:id',
     ValidationMiddleware.validateParams(CommonSchemas.id),
-    authMiddleware.authorize(UserRole.PROFESSOR),
+    authMiddleware.authorize(UserRole.PROFESSOR, UserRole.ADMIN),
     ErrorHandler.asyncHandler(evaluationController.deleteEvaluation.bind(evaluationController))
   );
 
