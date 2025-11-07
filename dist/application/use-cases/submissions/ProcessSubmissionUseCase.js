@@ -9,21 +9,25 @@ class ProcessSubmissionUseCase {
         this.leaderboardRepository = leaderboardRepository;
     }
     async execute(submissionId) {
+        // Get submission
         const submission = await this.submissionRepository.findById(submissionId);
         if (!submission) {
             throw new Error('Submission not found');
         }
+        // Update status to RUNNING
         await this.submissionRepository.update(submissionId, {
             status: Submission_1.SubmissionStatus.RUNNING
         });
         try {
+            // Execute code using runner service
             const runnerResult = await this.runnerService.executeCode({
                 language: submission.language,
                 code: submission.code,
-                timeLimit: 1500,
-                memoryLimit: 256,
-                testCases: []
+                timeLimit: 1500, // Default time limit, should come from challenge
+                memoryLimit: 256, // Default memory limit, should come from challenge
+                testCases: [] // Should come from challenge test cases
             });
+            // Update submission with results
             const updateData = {
                 status: runnerResult.status,
                 score: runnerResult.score,
@@ -41,6 +45,7 @@ class ProcessSubmissionUseCase {
             if (!updatedSubmission) {
                 throw new Error('Failed to update submission');
             }
+            // Update leaderboards
             await this.leaderboardRepository.updateChallengeLeaderboard(submission.challengeId);
             await this.leaderboardRepository.updateCourseLeaderboard(submission.courseId);
             const submissionResult = {
@@ -57,6 +62,7 @@ class ProcessSubmissionUseCase {
             return submissionResult;
         }
         catch (error) {
+            // Update submission with error
             await this.submissionRepository.update(submissionId, {
                 status: Submission_1.SubmissionStatus.RUNTIME_ERROR,
                 errorMessage: error instanceof Error ? error.message : 'Unknown error'

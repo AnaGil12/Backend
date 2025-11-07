@@ -31,12 +31,14 @@ class JavaScriptRunner {
     async runTestCase(code, testCase, timeLimit) {
         return new Promise((resolve) => {
             const startTime = Date.now();
+            // Create a temporary JavaScript file
             const fs = require('fs');
             const path = require('path');
             const tempDir = '/tmp';
             const fileName = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.js`;
             const filePath = path.join(tempDir, fileName);
             try {
+                // Wrap the code to handle input/output
                 const wrappedCode = `
 const readline = require('readline');
 const rl = readline.createInterface({
@@ -59,6 +61,7 @@ rl.on('line', (input) => {
 });
 `;
                 fs.writeFileSync(filePath, wrappedCode);
+                // Run JavaScript code in Docker container for isolation
                 const docker = (0, child_process_1.spawn)('docker', [
                     'run',
                     '--rm',
@@ -84,12 +87,14 @@ rl.on('line', (input) => {
                 docker.on('close', (code) => {
                     const endTime = Date.now();
                     const executionTime = endTime - startTime;
+                    // Clean up
                     try {
                         if (fs.existsSync(filePath)) {
                             fs.unlinkSync(filePath);
                         }
                     }
                     catch (e) {
+                        // Ignore cleanup errors
                     }
                     if (code !== 0) {
                         resolve({
@@ -123,8 +128,10 @@ rl.on('line', (input) => {
                         errorMessage: err.message
                     });
                 });
+                // Send input to the program
                 docker.stdin.write(testCase.input);
                 docker.stdin.end();
+                // Timeout handling
                 setTimeout(() => {
                     docker.kill('SIGKILL');
                     resolve({

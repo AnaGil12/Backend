@@ -126,6 +126,55 @@ export const SubmissionSchemas = {
   })
 };
 
+export const CourseSchemas = {
+  create: Joi.object({
+    name: Joi.string().min(3).max(200).required(),
+    code: Joi.string().min(2).max(20).required(),
+    description: Joi.string().min(10).required(),
+    period: Joi.string().required(),
+    group: Joi.number().min(1).required(),
+    professorIds: Joi.array().items(Joi.string()).optional()
+  }),
+  
+  update: Joi.object({
+    name: Joi.string().min(3).max(200).optional(),
+    code: Joi.string().min(2).max(20).optional(),
+    description: Joi.string().min(10).optional(),
+    period: Joi.string().optional(),
+    group: Joi.number().min(1).optional(),
+    professorIds: Joi.array().items(Joi.string()).optional(),
+    isActive: Joi.boolean().optional()
+  }),
+
+  enroll: Joi.object({
+    studentId: Joi.string().required()
+  })
+};
+
+export const EvaluationSchemas = {
+  create: Joi.object({
+    name: Joi.string().min(3).max(200).required(),
+    description: Joi.string().min(10).required(),
+    courseId: Joi.string().required(),
+    challengeIds: Joi.array().items(Joi.string()).min(1).required(),
+    startDate: Joi.date().required(),
+    endDate: Joi.date().greater(Joi.ref('startDate')).required(),
+    durationMinutes: Joi.number().min(15).max(480).required(),
+    maxAttempts: Joi.number().min(1).max(10).required()
+  }),
+  
+  update: Joi.object({
+    name: Joi.string().min(3).max(200).optional(),
+    description: Joi.string().min(10).optional(),
+    challengeIds: Joi.array().items(Joi.string()).min(1).optional(),
+    startDate: Joi.date().optional(),
+    endDate: Joi.date().optional(),
+    durationMinutes: Joi.number().min(15).max(480).optional(),
+    maxAttempts: Joi.number().min(1).max(10).optional(),
+    status: Joi.string().valid('draft', 'scheduled', 'active', 'finished', 'cancelled').optional()
+  })
+};
+
 export const CommonSchemas = {
   id: Joi.object({
     id: Joi.string().required()

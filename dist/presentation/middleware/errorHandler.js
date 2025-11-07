@@ -4,16 +4,25 @@ exports.ErrorHandler = void 0;
 const Logger_1 = require("../../infrastructure/services/Logger");
 class ErrorHandler {
     static handle(error, req, res, next) {
-        this.logger.error('Unhandled error:', {
-            error: error.message,
-            stack: error.stack,
-            url: req.url,
-            method: req.method,
-            ip: req.ip,
-            userAgent: req.get('User-Agent')
-        });
+        try {
+            ErrorHandler.logger.error('Unhandled error:', {
+                error: error.message,
+                stack: error.stack,
+                url: req.url,
+                method: req.method,
+                ip: req.ip,
+                userAgent: req.get('User-Agent')
+            });
+        }
+        catch (logError) {
+            // Fallback if logger fails
+            console.error('Error logging failed:', logError);
+            console.error('Original error:', error.message, error.stack);
+        }
+        // Default error response
         let statusCode = 500;
         let message = 'Internal server error';
+        // Handle specific error types
         if (error.name === 'ValidationError') {
             statusCode = 400;
             message = 'Validation error';

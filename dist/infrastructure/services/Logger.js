@@ -22,6 +22,7 @@ class Logger {
                 })
             ]
         });
+        // Add console transport in development
         if (process.env.NODE_ENV !== 'production') {
             this.logger.add(new winston_1.default.transports.Console({
                 format: winston_1.default.format.combine(winston_1.default.format.colorize(), winston_1.default.format.simple())
@@ -40,6 +41,7 @@ class Logger {
     debug(message, meta) {
         this.logger.debug(message, meta);
     }
+    // Structured logging for submissions
     logSubmission(submissionId, event, data) {
         this.info(`Submission ${event}`, {
             submissionId,
@@ -48,6 +50,7 @@ class Logger {
             ...data
         });
     }
+    // Structured logging for API requests
     logRequest(req, res, responseTime) {
         this.info('API Request', {
             method: req.method,

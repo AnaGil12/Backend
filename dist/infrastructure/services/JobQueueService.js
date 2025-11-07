@@ -12,13 +12,16 @@ class JobQueueService {
         this.setupQueue();
     }
     setupQueue() {
+        // Process jobs
         this.submissionQueue.process('process-submission', async (job) => {
             const jobData = job.data;
             return await this.processSubmissionJob(jobData);
         });
+        // Handle completed jobs
         this.submissionQueue.on('completed', (job, result) => {
             console.log(`Job ${job.id} completed with result:`, result);
         });
+        // Handle failed jobs
         this.submissionQueue.on('failed', (job, err) => {
             console.error(`Job ${job.id} failed:`, err);
         });
@@ -35,6 +38,8 @@ class JobQueueService {
         });
     }
     async processSubmissionJob(jobData) {
+        // This will be implemented by the worker
+        // For now, return a mock result
         return {
             submissionId: jobData.submissionId,
             status: Submission_1.SubmissionStatus.ACCEPTED,

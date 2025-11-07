@@ -9,6 +9,7 @@ class ChallengeController {
     async createChallenge(req, res) {
         try {
             const userId = req.user?.userId;
+            const userRole = req.user?.role;
             if (!userId) {
                 res.status(401).json({
                     success: false,
@@ -16,7 +17,7 @@ class ChallengeController {
                 });
                 return;
             }
-            const challenge = await this.createChallengeUseCase.execute(req.body, userId);
+            const challenge = await this.createChallengeUseCase.execute(req.body, userId, userRole);
             res.status(201).json({
                 success: true,
                 data: challenge

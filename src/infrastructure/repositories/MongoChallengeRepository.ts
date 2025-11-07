@@ -34,7 +34,7 @@ interface IChallengeDocument extends Document {
 }
 
 const TestCaseSchema = new Schema<ITestCaseDocument>({
-  challengeId: { type: String, required: true },
+  challengeId: { type: String, required: false }, // Will be set after challenge creation
   input: { type: String, required: true },
   expectedOutput: { type: String, required: true },
   isHidden: { type: Boolean, default: false },
@@ -65,14 +65,31 @@ export class MongoChallengeRepository implements IChallengeRepository {
     return challenge ? this.mapToChallenge(challenge) : null;
   }
 
-  async create(challengeData: CreateChallengeRequest): Promise<Challenge> {
+  async create(challengeData: CreateChallengeRequest, createdBy: string): Promise<Challenge> {
+    // Create challenge document first to get the ID
     const challenge = new ChallengeModel({
       ...challengeData,
+      createdBy,
+      testCases: challengeData.testCases.map(tc => ({
+        ...tc,
+        challengeId: '', // Temporary, will be updated after save
+        createdAt: new Date()
+      })),
       createdAt: new Date(),
       updatedAt: new Date()
     });
     
+    // Save to get the actual ID
     const savedChallenge = await challenge.save();
+    const actualChallengeId = (savedChallenge._id as any).toString();
+    
+    // Update testCases with the actual challengeId
+    savedChallenge.testCases.forEach((tc: any) => {
+      tc.challengeId = actualChallengeId;
+    });
+    
+    await savedChallenge.save();
+    
     return this.mapToChallenge(savedChallenge);
   }
 

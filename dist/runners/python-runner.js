@@ -31,6 +31,7 @@ class PythonRunner {
     async runTestCase(code, testCase, timeLimit) {
         return new Promise((resolve) => {
             const startTime = Date.now();
+            // Create a temporary Python file
             const fs = require('fs');
             const path = require('path');
             const tempDir = '/tmp';
@@ -38,6 +39,7 @@ class PythonRunner {
             const filePath = path.join(tempDir, fileName);
             try {
                 fs.writeFileSync(filePath, code);
+                // Run Python code in Docker container for isolation
                 const docker = (0, child_process_1.spawn)('docker', [
                     'run',
                     '--rm',
@@ -63,12 +65,14 @@ class PythonRunner {
                 docker.on('close', (code) => {
                     const endTime = Date.now();
                     const executionTime = endTime - startTime;
+                    // Clean up
                     try {
                         if (fs.existsSync(filePath)) {
                             fs.unlinkSync(filePath);
                         }
                     }
                     catch (e) {
+                        // Ignore cleanup errors
                     }
                     if (code !== 0) {
                         resolve({
@@ -102,8 +106,10 @@ class PythonRunner {
                         errorMessage: err.message
                     });
                 });
+                // Send input to the program
                 docker.stdin.write(testCase.input);
                 docker.stdin.end();
+                // Timeout handling
                 setTimeout(() => {
                     docker.kill('SIGKILL');
                     resolve({

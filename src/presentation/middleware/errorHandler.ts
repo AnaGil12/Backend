@@ -5,14 +5,20 @@ export class ErrorHandler {
   private static logger = new Logger('ErrorHandler');
 
   static handle(error: Error, req: Request, res: Response, next: NextFunction): void {
-    this.logger.error('Unhandled error:', {
-      error: error.message,
-      stack: error.stack,
-      url: req.url,
-      method: req.method,
-      ip: req.ip,
-      userAgent: req.get('User-Agent')
-    });
+    try {
+      ErrorHandler.logger.error('Unhandled error:', {
+        error: error.message,
+        stack: error.stack,
+        url: req.url,
+        method: req.method,
+        ip: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+    } catch (logError) {
+      // Fallback if logger fails
+      console.error('Error logging failed:', logError);
+      console.error('Original error:', error.message, error.stack);
+    }
 
     // Default error response
     let statusCode = 500;

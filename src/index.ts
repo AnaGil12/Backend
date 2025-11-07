@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsDoc from 'swagger-jsdoc';
+import path from 'path';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -17,6 +18,10 @@ import { Logger } from './infrastructure/services/Logger';
 import { createAuthRoutes } from './presentation/routes/authRoutes';
 import { createChallengeRoutes } from './presentation/routes/challengeRoutes';
 import { createSubmissionRoutes } from './presentation/routes/submissionRoutes';
+import { createCourseRoutes } from './presentation/routes/courseRoutes';
+import { createEvaluationRoutes } from './presentation/routes/evaluationRoutes';
+import { createLeaderboardRoutes } from './presentation/routes/leaderboardRoutes';
+import { createAIAssistantRoutes } from './presentation/routes/aiAssistantRoutes';
 import { ErrorHandler } from './presentation/middleware/errorHandler';
 import { AuthMiddleware } from './presentation/middleware/auth';
 import { AuthService } from './infrastructure/services/AuthService';
@@ -28,13 +33,20 @@ import { MongoChallengeRepository } from './infrastructure/repositories/MongoCha
 import { MockCourseRepository } from './infrastructure/repositories/MockCourseRepository';
 import { MockSubmissionRepository } from './infrastructure/repositories/MockSubmissionRepository';
 import { MockLeaderboardRepository } from './infrastructure/repositories/MockLeaderboardRepository';
+import { MockEvaluationRepository } from './infrastructure/repositories/MockEvaluationRepository';
 import { LoginUseCase } from './application/use-cases/auth/LoginUseCase';
 import { RegisterUseCase } from './application/use-cases/auth/RegisterUseCase';
 import { CreateChallengeUseCase } from './application/use-cases/challenges/CreateChallengeUseCase';
 import { SubmitSolutionUseCase } from './application/use-cases/submissions/SubmitSolutionUseCase';
+import { CreateCourseUseCase } from './application/use-cases/courses/CreateCourseUseCase';
+import { CreateEvaluationUseCase } from './application/use-cases/evaluations/CreateEvaluationUseCase';
 import { AuthController } from './presentation/controllers/AuthController';
 import { ChallengeController } from './presentation/controllers/ChallengeController';
 import { SubmissionController } from './presentation/controllers/SubmissionController';
+import { CourseController } from './presentation/controllers/CourseController';
+import { EvaluationController } from './presentation/controllers/EvaluationController';
+import { LeaderboardController } from './presentation/controllers/LeaderboardController';
+import { AIAssistantController } from './presentation/controllers/AIAssistantController';
 
 const app = express();
 const logger = new Logger('Application');
@@ -67,15 +79,22 @@ const challengeRepo = new MongoChallengeRepository();
 const courseRepo = new MockCourseRepository();
 const submissionRepo = new MockSubmissionRepository();
 const leaderboardRepo = new MockLeaderboardRepository();
+const evaluationRepo = new MockEvaluationRepository();
 
 const loginUC = new LoginUseCase(userRepo, authService);
 const registerUC = new RegisterUseCase(userRepo, authService);
 const createChallengeUC = new CreateChallengeUseCase(challengeRepo, courseRepo);
 const submitSolutionUC = new SubmitSolutionUseCase(submissionRepo, challengeRepo, courseRepo, jobQueueService);
+const createCourseUC = new CreateCourseUseCase(courseRepo);
+const createEvaluationUC = new CreateEvaluationUseCase(evaluationRepo, courseRepo);
 
 const authController = new AuthController(loginUC, registerUC, authService);
 const challengeController = new ChallengeController(createChallengeUC, challengeRepo);
 const submissionController = new SubmissionController(submitSolutionUC, submissionRepo);
+const courseController = new CourseController(createCourseUC, courseRepo);
+const evaluationController = new EvaluationController(createEvaluationUC, evaluationRepo);
+const leaderboardController = new LeaderboardController(leaderboardRepo);
+const aiAssistantController = new AIAssistantController(aiAssistantService);
 
 const authMiddleware = new AuthMiddleware(authService);
 
@@ -93,6 +112,10 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', createAuthRoutes(authController));
 app.use('/api/challenges', createChallengeRoutes(challengeController, authMiddleware));
 app.use('/api/submissions', createSubmissionRoutes(submissionController, authMiddleware));
+app.use('/api/courses', createCourseRoutes(courseController, authMiddleware));
+app.use('/api/evaluations', createEvaluationRoutes(evaluationController, authMiddleware));
+app.use('/api/leaderboard', createLeaderboardRoutes(leaderboardController, authMiddleware));
+app.use('/api/ai', createAIAssistantRoutes(aiAssistantController, authMiddleware));
 
 // 📊 Endpoint de métricas (mock)
 app.get('/api/metrics', (req, res) => {
@@ -117,11 +140,35 @@ const swaggerOptions = {
       description: 'Documentación interactiva de la API para la plataforma de retos algorítmicos',
     },
     servers: [{ url: 'http://localhost:3000', description: 'Servidor local' }],
+    tags: [
+      { name: 'Authentication', description: 'Endpoints de autenticación' },
+      { name: 'Challenges', description: 'Gestión de retos algorítmicos' },
+      { name: 'Submissions', description: 'Envío y gestión de soluciones' },
+      { name: 'Courses', description: 'Gestión de cursos' },
+      { name: 'Evaluations', description: 'Gestión de evaluaciones' },
+      { name: 'Leaderboard', description: 'Tablas de clasificación' },
+      { name: 'AI Assistant', description: 'Asistente IA para generar contenido' },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
   },
-  apis: ['./src/presentation/routes/*.ts'], // ⚠️ Ajusta si tus rutas están en otra carpeta
+  apis: [
+    path.join(__dirname, 'presentation/routes/*.js'),
+    path.join(__dirname, 'presentation/controllers/*.js'),
+  ],
 };
 const swaggerSpecs = swaggerJsDoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Algorithmic Challenges API'
+}));
 
 // ⚠️ Manejo de errores
 app.use(ErrorHandler.notFound);

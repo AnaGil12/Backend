@@ -10,6 +10,7 @@ class Worker {
     constructor() {
         this.logger = new Logger_1.Logger('Worker');
         this.submissionQueue = new bull_1.default('submission processing', process.env.REDIS_URL || 'redis://localhost:6379');
+        // Initialize dependencies (these would be injected in a real implementation)
         const submissionRepository = {};
         const runnerService = {};
         const leaderboardRepository = {};
@@ -17,6 +18,7 @@ class Worker {
         this.setupQueue();
     }
     setupQueue() {
+        // Process jobs
         this.submissionQueue.process('process-submission', async (job) => {
             const jobData = job.data;
             this.logger.info('Processing submission job', {
@@ -45,6 +47,7 @@ class Worker {
                 throw error;
             }
         });
+        // Handle completed jobs
         this.submissionQueue.on('completed', (job, result) => {
             this.logger.info('Job completed', {
                 jobId: job.id,
@@ -52,6 +55,7 @@ class Worker {
                 result
             });
         });
+        // Handle failed jobs
         this.submissionQueue.on('failed', (job, err) => {
             this.logger.error('Job failed', {
                 jobId: job.id,
@@ -60,6 +64,7 @@ class Worker {
                 stack: err.stack
             });
         });
+        // Handle stalled jobs
         this.submissionQueue.on('stalled', (job) => {
             this.logger.warn('Job stalled', {
                 jobId: job.id,
@@ -70,6 +75,7 @@ class Worker {
     }
     async start() {
         this.logger.info('Starting worker...');
+        // Keep the process alive
         process.on('SIGINT', () => {
             this.logger.info('Received SIGINT, shutting down gracefully...');
             this.submissionQueue.close();
@@ -82,6 +88,7 @@ class Worker {
         });
     }
 }
+// Start worker
 const worker = new Worker();
 worker.start().catch((error) => {
     console.error('Failed to start worker:', error);

@@ -13,34 +13,143 @@ export function createSubmissionRoutes(
   // Apply authentication to all routes
   router.use(authMiddleware.authenticate);
 
-  // POST /submissions
+  /**
+   * @swagger
+   * /api/submissions:
+   *   post:
+   *     summary: Submit a solution
+   *     tags: [Submissions]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - challengeId
+   *               - courseId
+   *               - language
+   *               - code
+   *             properties:
+   *               challengeId:
+   *                 type: string
+   *               courseId:
+   *                 type: string
+   *               language:
+   *                 type: string
+   *                 enum: [python, javascript, cpp, java]
+   *               code:
+   *                 type: string
+   *                 example: "def solution():\n    return True"
+   *     responses:
+   *       201:
+   *         description: Solution submitted successfully
+   *       400:
+   *         description: Validation error
+   */
   router.post(
     '/',
     ValidationMiddleware.validate(SubmissionSchemas.create),
     ErrorHandler.asyncHandler(submissionController.submitSolution.bind(submissionController))
   );
 
-  // GET /submissions
+  /**
+   * @swagger
+   * /api/submissions:
+   *   get:
+   *     summary: List all submissions
+   *     tags: [Submissions]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           default: 50
+   *       - in: query
+   *         name: offset
+   *         schema:
+   *           type: integer
+   *           default: 0
+   *     responses:
+   *       200:
+   *         description: List of submissions
+   */
   router.get(
     '/',
     ValidationMiddleware.validateQuery(CommonSchemas.pagination),
     ErrorHandler.asyncHandler(submissionController.getSubmissions.bind(submissionController))
   );
 
-  // GET /submissions/my
+  /**
+   * @swagger
+   * /api/submissions/my:
+   *   get:
+   *     summary: Get current user's submissions
+   *     tags: [Submissions]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           default: 50
+   *       - in: query
+   *         name: offset
+   *         schema:
+   *           type: integer
+   *           default: 0
+   *     responses:
+   *       200:
+   *         description: User's submissions
+   */
   router.get(
     '/my',
     ValidationMiddleware.validateQuery(CommonSchemas.pagination),
     ErrorHandler.asyncHandler(submissionController.getMySubmissions.bind(submissionController))
   );
 
-  // GET /submissions/stats
+  /**
+   * @swagger
+   * /api/submissions/stats:
+   *   get:
+   *     summary: Get submission statistics
+   *     tags: [Submissions]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Submission statistics
+   */
   router.get(
     '/stats',
     ErrorHandler.asyncHandler(submissionController.getSubmissionStats.bind(submissionController))
   );
 
-  // GET /submissions/:id
+  /**
+   * @swagger
+   * /api/submissions/{id}:
+   *   get:
+   *     summary: Get submission by ID
+   *     tags: [Submissions]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Submission details
+   *       404:
+   *         description: Submission not found
+   */
   router.get(
     '/:id',
     ValidationMiddleware.validateParams(CommonSchemas.id),

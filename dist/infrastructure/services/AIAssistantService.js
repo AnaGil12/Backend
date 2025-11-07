@@ -6,6 +6,7 @@ class AIAssistantService {
         this.openaiApiKey = process.env.OPENAI_API_KEY || '';
     }
     async generateChallengeIdeas(topic, count = 3) {
+        // Mock implementation - in real scenario, this would call OpenAI API
         const mockChallenges = [
             {
                 title: `${topic} - Basic Implementation`,
@@ -65,20 +66,24 @@ class AIAssistantService {
         return mockChallenges.slice(0, count);
     }
     async generateTestCases(challengeDescription, count = 5) {
+        // Mock implementation
         const testCases = [];
         for (let i = 0; i < count; i++) {
             testCases.push({
                 input: `Test input ${i + 1} for: ${challengeDescription}`,
                 expectedOutput: `Expected output ${i + 1}`,
-                isHidden: i >= 2
+                isHidden: i >= 2 // First 2 are visible, rest are hidden
             });
         }
         return testCases;
     }
     async validateTestCase(input, expectedOutput, language) {
+        // Mock validation - in real scenario, this would run the test case
+        // to ensure it produces the expected output
         return input.length > 0 && expectedOutput.length > 0;
     }
     async suggestImprovements(challengeDescription) {
+        // Mock suggestions
         return [
             'Consider adding edge cases for empty inputs',
             'Add time complexity requirements',

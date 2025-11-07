@@ -37,7 +37,7 @@ exports.MongoChallengeRepository = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const Challenge_1 = require("../../domain/entities/Challenge");
 const TestCaseSchema = new mongoose_1.Schema({
-    challengeId: { type: String, required: true },
+    challengeId: { type: String, required: false }, // Will be set after challenge creation
     input: { type: String, required: true },
     expectedOutput: { type: String, required: true },
     isHidden: { type: Boolean, default: false },
@@ -64,13 +64,27 @@ class MongoChallengeRepository {
         const challenge = await ChallengeModel.findById(id);
         return challenge ? this.mapToChallenge(challenge) : null;
     }
-    async create(challengeData) {
+    async create(challengeData, createdBy) {
+        // Create challenge document first to get the ID
         const challenge = new ChallengeModel({
             ...challengeData,
+            createdBy,
+            testCases: challengeData.testCases.map(tc => ({
+                ...tc,
+                challengeId: '', // Temporary, will be updated after save
+                createdAt: new Date()
+            })),
             createdAt: new Date(),
             updatedAt: new Date()
         });
+        // Save to get the actual ID
         const savedChallenge = await challenge.save();
+        const actualChallengeId = savedChallenge._id.toString();
+        // Update testCases with the actual challengeId
+        savedChallenge.testCases.forEach((tc) => {
+            tc.challengeId = actualChallengeId;
+        });
+        await savedChallenge.save();
         return this.mapToChallenge(savedChallenge);
     }
     async update(id, challengeData) {

@@ -25,7 +25,7 @@ class AuthMiddleware {
                 req.user = {
                     userId: decoded.userId,
                     role: decoded.role,
-                    email: ''
+                    email: '' // Will be populated if needed
                 };
                 next();
             }
@@ -71,6 +71,7 @@ class AuthMiddleware {
                 next();
             }
             catch (error) {
+                // Continue without authentication for optional auth
                 next();
             }
         };
