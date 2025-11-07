@@ -80,7 +80,7 @@ export function createSubmissionRoutes(
    */
   router.get(
     '/',
-    ValidationMiddleware.validateQuery(CommonSchemas.pagination),
+    ValidationMiddleware.validateQuery(CommonSchemas.submissionList),
     ErrorHandler.asyncHandler(submissionController.getSubmissions.bind(submissionController))
   );
 

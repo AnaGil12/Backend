@@ -164,6 +164,28 @@ exports.CommonSchemas = {
     pagination: joi_1.default.object({
         limit: joi_1.default.number().min(1).max(100).default(50),
         offset: joi_1.default.number().min(0).default(0)
+    }).unknown(true), // Allow additional query parameters
+    challengeList: joi_1.default.object({
+        limit: joi_1.default.number().min(1).max(100).default(50).optional(),
+        offset: joi_1.default.number().min(0).default(0).optional(),
+        courseId: joi_1.default.string().optional(),
+        status: joi_1.default.string().valid('draft', 'published', 'archived').optional(),
+        difficulty: joi_1.default.string().valid('Easy', 'Medium', 'Hard').optional(),
+        tags: joi_1.default.alternatives().try(joi_1.default.string(), joi_1.default.array().items(joi_1.default.string())).optional()
+    }),
+    courseList: joi_1.default.object({
+        limit: joi_1.default.number().min(1).max(100).default(50).optional(),
+        offset: joi_1.default.number().min(0).default(0).optional(),
+        period: joi_1.default.string().optional()
+    }),
+    submissionList: joi_1.default.object({
+        limit: joi_1.default.number().min(1).max(100).default(50).optional(),
+        offset: joi_1.default.number().min(0).default(0).optional(),
+        userId: joi_1.default.string().optional(),
+        challengeId: joi_1.default.string().optional(),
+        courseId: joi_1.default.string().optional(),
+        status: joi_1.default.string().valid('pending', 'running', 'accepted', 'rejected', 'error').optional(),
+        language: joi_1.default.string().valid('python', 'javascript', 'cpp', 'java').optional()
     })
 };
 //# sourceMappingURL=validation.js.map

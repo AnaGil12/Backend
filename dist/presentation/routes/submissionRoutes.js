@@ -68,7 +68,7 @@ function createSubmissionRoutes(submissionController, authMiddleware) {
      *       200:
      *         description: List of submissions
      */
-    router.get('/', validation_1.ValidationMiddleware.validateQuery(validation_1.CommonSchemas.pagination), errorHandler_1.ErrorHandler.asyncHandler(submissionController.getSubmissions.bind(submissionController)));
+    router.get('/', validation_1.ValidationMiddleware.validateQuery(validation_1.CommonSchemas.submissionList), errorHandler_1.ErrorHandler.asyncHandler(submissionController.getSubmissions.bind(submissionController)));
     /**
      * @swagger
      * /api/submissions/my:

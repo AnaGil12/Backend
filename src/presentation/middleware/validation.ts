@@ -183,6 +183,34 @@ export const CommonSchemas = {
   pagination: Joi.object({
     limit: Joi.number().min(1).max(100).default(50),
     offset: Joi.number().min(0).default(0)
+  }).unknown(true), // Allow additional query parameters
+  
+  challengeList: Joi.object({
+    limit: Joi.number().min(1).max(100).default(50).optional(),
+    offset: Joi.number().min(0).default(0).optional(),
+    courseId: Joi.string().optional(),
+    status: Joi.string().valid('draft', 'published', 'archived').optional(),
+    difficulty: Joi.string().valid('Easy', 'Medium', 'Hard').optional(),
+    tags: Joi.alternatives().try(
+      Joi.string(),
+      Joi.array().items(Joi.string())
+    ).optional()
+  }),
+  
+  courseList: Joi.object({
+    limit: Joi.number().min(1).max(100).default(50).optional(),
+    offset: Joi.number().min(0).default(0).optional(),
+    period: Joi.string().optional()
+  }),
+  
+  submissionList: Joi.object({
+    limit: Joi.number().min(1).max(100).default(50).optional(),
+    offset: Joi.number().min(0).default(0).optional(),
+    userId: Joi.string().optional(),
+    challengeId: Joi.string().optional(),
+    courseId: Joi.string().optional(),
+    status: Joi.string().valid('pending', 'running', 'accepted', 'rejected', 'error').optional(),
+    language: Joi.string().valid('python', 'javascript', 'cpp', 'java').optional()
   })
 };
 

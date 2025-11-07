@@ -115,7 +115,7 @@ export function createChallengeRoutes(
    */
   router.get(
     '/',
-    ValidationMiddleware.validateQuery(CommonSchemas.pagination),
+    ValidationMiddleware.validateQuery(CommonSchemas.challengeList),
     ErrorHandler.asyncHandler(challengeController.getChallenges.bind(challengeController))
   );
 

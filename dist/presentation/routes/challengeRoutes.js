@@ -103,7 +103,7 @@ function createChallengeRoutes(challengeController, authMiddleware) {
      *       200:
      *         description: List of challenges
      */
-    router.get('/', validation_1.ValidationMiddleware.validateQuery(validation_1.CommonSchemas.pagination), errorHandler_1.ErrorHandler.asyncHandler(challengeController.getChallenges.bind(challengeController)));
+    router.get('/', validation_1.ValidationMiddleware.validateQuery(validation_1.CommonSchemas.challengeList), errorHandler_1.ErrorHandler.asyncHandler(challengeController.getChallenges.bind(challengeController)));
     /**
      * @swagger
      * /api/challenges/search:

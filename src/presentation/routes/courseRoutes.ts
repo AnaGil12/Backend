@@ -95,7 +95,7 @@ export function createCourseRoutes(
    */
   router.get(
     '/',
-    ValidationMiddleware.validateQuery(CommonSchemas.pagination),
+    ValidationMiddleware.validateQuery(CommonSchemas.courseList),
     ErrorHandler.asyncHandler(courseController.getCourses.bind(courseController))
   );
 
