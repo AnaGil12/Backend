@@ -16,8 +16,20 @@ export declare const ChallengeSchemas: {
 export declare const SubmissionSchemas: {
     create: Joi.ObjectSchema<any>;
 };
+export declare const CourseSchemas: {
+    create: Joi.ObjectSchema<any>;
+    update: Joi.ObjectSchema<any>;
+    enroll: Joi.ObjectSchema<any>;
+};
+export declare const EvaluationSchemas: {
+    create: Joi.ObjectSchema<any>;
+    update: Joi.ObjectSchema<any>;
+};
 export declare const CommonSchemas: {
     id: Joi.ObjectSchema<any>;
     pagination: Joi.ObjectSchema<any>;
+    challengeList: Joi.ObjectSchema<any>;
+    courseList: Joi.ObjectSchema<any>;
+    submissionList: Joi.ObjectSchema<any>;
 };
 //# sourceMappingURL=validation.d.ts.map

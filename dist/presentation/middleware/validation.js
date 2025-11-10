@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CommonSchemas = exports.SubmissionSchemas = exports.ChallengeSchemas = exports.AuthSchemas = exports.ValidationMiddleware = void 0;
+exports.CommonSchemas = exports.EvaluationSchemas = exports.CourseSchemas = exports.SubmissionSchemas = exports.ChallengeSchemas = exports.AuthSchemas = exports.ValidationMiddleware = void 0;
 const joi_1 = __importDefault(require("joi"));
 class ValidationMiddleware {
     static validate(schema) {
@@ -59,6 +59,7 @@ class ValidationMiddleware {
     }
 }
 exports.ValidationMiddleware = ValidationMiddleware;
+// Validation schemas
 exports.AuthSchemas = {
     login: joi_1.default.object({
         email: joi_1.default.string().email().required(),
@@ -112,6 +113,50 @@ exports.SubmissionSchemas = {
         code: joi_1.default.string().min(10).required()
     })
 };
+exports.CourseSchemas = {
+    create: joi_1.default.object({
+        name: joi_1.default.string().min(3).max(200).required(),
+        code: joi_1.default.string().min(2).max(20).required(),
+        description: joi_1.default.string().min(10).required(),
+        period: joi_1.default.string().required(),
+        group: joi_1.default.number().min(1).required(),
+        professorIds: joi_1.default.array().items(joi_1.default.string()).optional()
+    }),
+    update: joi_1.default.object({
+        name: joi_1.default.string().min(3).max(200).optional(),
+        code: joi_1.default.string().min(2).max(20).optional(),
+        description: joi_1.default.string().min(10).optional(),
+        period: joi_1.default.string().optional(),
+        group: joi_1.default.number().min(1).optional(),
+        professorIds: joi_1.default.array().items(joi_1.default.string()).optional(),
+        isActive: joi_1.default.boolean().optional()
+    }),
+    enroll: joi_1.default.object({
+        studentId: joi_1.default.string().required()
+    })
+};
+exports.EvaluationSchemas = {
+    create: joi_1.default.object({
+        name: joi_1.default.string().min(3).max(200).required(),
+        description: joi_1.default.string().min(10).required(),
+        courseId: joi_1.default.string().required(),
+        challengeIds: joi_1.default.array().items(joi_1.default.string()).min(1).required(),
+        startDate: joi_1.default.date().required(),
+        endDate: joi_1.default.date().greater(joi_1.default.ref('startDate')).required(),
+        durationMinutes: joi_1.default.number().min(15).max(480).required(),
+        maxAttempts: joi_1.default.number().min(1).max(10).required()
+    }),
+    update: joi_1.default.object({
+        name: joi_1.default.string().min(3).max(200).optional(),
+        description: joi_1.default.string().min(10).optional(),
+        challengeIds: joi_1.default.array().items(joi_1.default.string()).min(1).optional(),
+        startDate: joi_1.default.date().optional(),
+        endDate: joi_1.default.date().optional(),
+        durationMinutes: joi_1.default.number().min(15).max(480).optional(),
+        maxAttempts: joi_1.default.number().min(1).max(10).optional(),
+        status: joi_1.default.string().valid('draft', 'scheduled', 'active', 'finished', 'cancelled').optional()
+    })
+};
 exports.CommonSchemas = {
     id: joi_1.default.object({
         id: joi_1.default.string().required()
@@ -119,6 +164,28 @@ exports.CommonSchemas = {
     pagination: joi_1.default.object({
         limit: joi_1.default.number().min(1).max(100).default(50),
         offset: joi_1.default.number().min(0).default(0)
+    }).unknown(true), // Allow additional query parameters
+    challengeList: joi_1.default.object({
+        limit: joi_1.default.number().min(1).max(100).default(50).optional(),
+        offset: joi_1.default.number().min(0).default(0).optional(),
+        courseId: joi_1.default.string().optional(),
+        status: joi_1.default.string().valid('draft', 'published', 'archived').optional(),
+        difficulty: joi_1.default.string().valid('Easy', 'Medium', 'Hard').optional(),
+        tags: joi_1.default.alternatives().try(joi_1.default.string(), joi_1.default.array().items(joi_1.default.string())).optional()
+    }),
+    courseList: joi_1.default.object({
+        limit: joi_1.default.number().min(1).max(100).default(50).optional(),
+        offset: joi_1.default.number().min(0).default(0).optional(),
+        period: joi_1.default.string().optional()
+    }),
+    submissionList: joi_1.default.object({
+        limit: joi_1.default.number().min(1).max(100).default(50).optional(),
+        offset: joi_1.default.number().min(0).default(0).optional(),
+        userId: joi_1.default.string().optional(),
+        challengeId: joi_1.default.string().optional(),
+        courseId: joi_1.default.string().optional(),
+        status: joi_1.default.string().valid('pending', 'running', 'accepted', 'rejected', 'error').optional(),
+        language: joi_1.default.string().valid('python', 'javascript', 'cpp', 'java').optional()
     })
 };
 //# sourceMappingURL=validation.js.map

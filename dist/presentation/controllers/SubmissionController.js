@@ -113,6 +113,7 @@ class SubmissionController {
             else {
                 submissions = await this.submissionRepository.findByUserId(userId);
             }
+            // Apply pagination
             const startIndex = parseInt(offset);
             const endIndex = startIndex + parseInt(limit);
             const paginatedSubmissions = submissions.slice(startIndex, endIndex);

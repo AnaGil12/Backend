@@ -9,26 +9,32 @@ class SubmitSolutionUseCase {
         this.jobQueueService = jobQueueService;
     }
     async execute(request, userId) {
+        // Verify challenge exists
         const challenge = await this.challengeRepository.findById(request.challengeId);
         if (!challenge) {
             throw new Error('Challenge not found');
         }
+        // Verify course exists
         const course = await this.courseRepository.findById(request.courseId);
         if (!course) {
             throw new Error('Course not found');
         }
+        // Check if user is enrolled in the course
         const isEnrolled = await this.courseRepository.isStudentEnrolled(request.courseId, userId);
         if (!isEnrolled) {
             throw new Error('Unauthorized: You are not enrolled in this course');
         }
+        // Check if challenge is published
         if (challenge.status !== 'published') {
             throw new Error('Challenge is not available for submissions');
         }
+        // Create submission
         const submissionData = {
             ...request,
             userId
         };
         const submission = await this.submissionRepository.create(submissionData);
+        // Add to job queue for processing
         await this.jobQueueService.addSubmissionJob({
             submissionId: submission.id,
             userId: submission.userId,

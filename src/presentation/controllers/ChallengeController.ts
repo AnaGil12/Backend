@@ -12,6 +12,7 @@ export class ChallengeController {
   async createChallenge(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as any).user?.userId;
+      const userRole = (req as any).user?.role;
       
       if (!userId) {
         res.status(401).json({
@@ -21,7 +22,7 @@ export class ChallengeController {
         return;
       }
 
-      const challenge = await this.createChallengeUseCase.execute(req.body, userId);
+      const challenge = await this.createChallengeUseCase.execute(req.body, userId, userRole);
 
       res.status(201).json({
         success: true,

@@ -31,6 +31,7 @@ class JavaRunner {
     async runTestCase(code, testCase, timeLimit) {
         return new Promise((resolve) => {
             const startTime = Date.now();
+            // Create a temporary Java file
             const fs = require('fs');
             const path = require('path');
             const tempDir = '/tmp';
@@ -38,6 +39,7 @@ class JavaRunner {
             const className = `Solution_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             const filePath = path.join(tempDir, fileName);
             try {
+                // Wrap the code with necessary imports and main method
                 const wrappedCode = `
 import java.util.Scanner;
 
@@ -53,6 +55,7 @@ public class ${className} {
 }
 `;
                 fs.writeFileSync(filePath, wrappedCode);
+                // Compile and run Java code in Docker container for isolation
                 const docker = (0, child_process_1.spawn)('docker', [
                     'run',
                     '--rm',
@@ -82,18 +85,22 @@ public class ${className} {
                 docker.on('close', (code) => {
                     const endTime = Date.now();
                     const executionTime = endTime - startTime;
+                    // Clean up
                     try {
                         if (fs.existsSync(filePath)) {
                             fs.unlinkSync(filePath);
                         }
+                        // Clean up compiled .class files
                         const classFile = filePath.replace('.java', '.class');
                         if (fs.existsSync(classFile)) {
                             fs.unlinkSync(classFile);
                         }
                     }
                     catch (e) {
+                        // Ignore cleanup errors
                     }
                     if (code !== 0) {
+                        // Check if it's a compilation error
                         if (error.includes('error:') || error.includes('Error:') || error.includes('compilation failed')) {
                             resolve({
                                 caseId: testCase.id,
@@ -136,6 +143,7 @@ public class ${className} {
                         errorMessage: err.message
                     });
                 });
+                // Timeout handling
                 setTimeout(() => {
                     docker.kill('SIGKILL');
                     resolve({

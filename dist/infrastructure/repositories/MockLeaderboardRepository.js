@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MockLeaderboardRepository = void 0;
 class MockLeaderboardRepository {
     async getChallengeLeaderboard(challengeId, limit = 50) {
+        // Mock implementation
         return {
             challengeId,
             entries: [],
@@ -11,6 +12,7 @@ class MockLeaderboardRepository {
         };
     }
     async getCourseLeaderboard(courseId, limit = 50) {
+        // Mock implementation
         return {
             courseId,
             entries: [],
@@ -19,6 +21,7 @@ class MockLeaderboardRepository {
         };
     }
     async getEvaluationLeaderboard(evaluationId, limit = 50) {
+        // Mock implementation
         return {
             evaluationId,
             entries: [],
@@ -27,15 +30,20 @@ class MockLeaderboardRepository {
         };
     }
     async updateChallengeLeaderboard(challengeId) {
+        // Mock implementation - would update leaderboard in real scenario
     }
     async updateCourseLeaderboard(courseId) {
+        // Mock implementation - would update leaderboard in real scenario
     }
     async updateEvaluationLeaderboard(evaluationId) {
+        // Mock implementation - would update leaderboard in real scenario
     }
     async getUserRank(userId, type, entityId) {
+        // Mock implementation
         return 1;
     }
     async getTopPerformers(type, entityId, limit) {
+        // Mock implementation
         return [];
     }
 }

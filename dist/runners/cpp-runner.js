@@ -31,6 +31,7 @@ class CppRunner {
     async runTestCase(code, testCase, timeLimit) {
         return new Promise((resolve) => {
             const startTime = Date.now();
+            // Create a temporary C++ file
             const fs = require('fs');
             const path = require('path');
             const tempDir = '/tmp';
@@ -39,6 +40,7 @@ class CppRunner {
             const filePath = path.join(tempDir, fileName);
             const executablePath = path.join(tempDir, executableName);
             try {
+                // Wrap the code with necessary includes and main function
                 const wrappedCode = `
 #include <iostream>
 #include <string>
@@ -54,6 +56,7 @@ int main() {
 }
 `;
                 fs.writeFileSync(filePath, wrappedCode);
+                // Compile and run C++ code in Docker container for isolation
                 const docker = (0, child_process_1.spawn)('docker', [
                     'run',
                     '--rm',
@@ -83,6 +86,7 @@ int main() {
                 docker.on('close', (code) => {
                     const endTime = Date.now();
                     const executionTime = endTime - startTime;
+                    // Clean up
                     try {
                         if (fs.existsSync(filePath)) {
                             fs.unlinkSync(filePath);
@@ -92,8 +96,10 @@ int main() {
                         }
                     }
                     catch (e) {
+                        // Ignore cleanup errors
                     }
                     if (code !== 0) {
+                        // Check if it's a compilation error
                         if (error.includes('error:') || error.includes('Error:')) {
                             resolve({
                                 caseId: testCase.id,
@@ -136,6 +142,7 @@ int main() {
                         errorMessage: err.message
                     });
                 });
+                // Timeout handling
                 setTimeout(() => {
                     docker.kill('SIGKILL');
                     resolve({

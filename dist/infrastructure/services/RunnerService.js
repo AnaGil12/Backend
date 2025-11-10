@@ -66,17 +66,21 @@ class RunnerService {
         };
     }
     async executeJavaScript(config) {
-        return this.executePython(config);
+        // Similar implementation for JavaScript
+        return this.executePython(config); // Simplified for now
     }
     async executeCpp(config) {
-        return this.executePython(config);
+        // Similar implementation for C++
+        return this.executePython(config); // Simplified for now
     }
     async executeJava(config) {
-        return this.executePython(config);
+        // Similar implementation for Java
+        return this.executePython(config); // Simplified for now
     }
     async runPythonTestCase(code, testCase, timeLimit) {
         return new Promise((resolve) => {
             const startTime = Date.now();
+            // Create a temporary Python file
             const fs = require('fs');
             const path = require('path');
             const tempDir = '/tmp';
@@ -99,10 +103,12 @@ class RunnerService {
                 python.on('close', (code) => {
                     const endTime = Date.now();
                     const executionTime = endTime - startTime;
+                    // Clean up
                     try {
                         fs.unlinkSync(filePath);
                     }
                     catch (e) {
+                        // Ignore cleanup errors
                     }
                     if (code !== 0) {
                         resolve({
@@ -136,6 +142,7 @@ class RunnerService {
                         errorMessage: err.message
                     });
                 });
+                // Send input to the program
                 python.stdin.write(testCase.input);
                 python.stdin.end();
             }
@@ -157,6 +164,7 @@ class RunnerService {
         return [...this.supportedLanguages];
     }
     async getRunnerStats() {
+        // This would be implemented with actual metrics
         return {
             activeRunners: 0,
             totalExecutions: 0,
