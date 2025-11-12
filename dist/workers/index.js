@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const bull_1 = __importDefault(require("bull"));
 const ProcessSubmissionUseCase_1 = require("../application/use-cases/submissions/ProcessSubmissionUseCase");
-const Logger_1 = require("../infrastructure/services/Logger");
+const Logger_1 = require("../frameworks/Logger");
 class Worker {
     constructor() {
         this.logger = new Logger_1.Logger('Worker');

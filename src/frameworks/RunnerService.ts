@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
-import { IRunnerService, RunnerConfig, RunnerResult } from '../../domain/services/IRunnerService';
-import { ProgrammingLanguage, SubmissionStatus } from '../../domain/entities/Submission';
+import { IRunnerService, RunnerConfig, RunnerResult } from '../domain/services/IRunnerService';
+import { ProgrammingLanguage, SubmissionStatus } from '../domain/entities/Submission';
 
 export class RunnerService implements IRunnerService {
   private readonly supportedLanguages: ProgrammingLanguage[] = [

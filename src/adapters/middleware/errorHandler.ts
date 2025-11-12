@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Logger } from '../../infrastructure/services/Logger';
+import { Logger } from '../../frameworks/Logger';
 
 export class ErrorHandler {
   private static logger = new Logger('ErrorHandler');

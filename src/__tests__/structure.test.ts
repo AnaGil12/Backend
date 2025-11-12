@@ -1,6 +1,6 @@
 // Simple test to verify the project structure and basic functionality
-import { AuthService } from '../infrastructure/services/AuthService';
-import { MockUserRepository } from '../infrastructure/repositories/MockUserRepository';
+import { AuthService } from '../frameworks/AuthService';
+import { MockUserRepository } from '../adapters/repositories/MockUserRepository';
 import { LoginUseCase } from '../application/use-cases/auth/LoginUseCase';
 import { UserRole } from '../domain/entities/User';
 

@@ -1,10 +1,10 @@
 import request from 'supertest';
 import express from 'express';
-import { AuthService } from '../../infrastructure/services/AuthService';
-import { MockUserRepository } from '../../infrastructure/repositories/MockUserRepository';
+import { AuthService } from '../../frameworks/AuthService';
+import { MockUserRepository } from '../../adapters/repositories/MockUserRepository';
 import { LoginUseCase } from '../../application/use-cases/auth/LoginUseCase';
-import { AuthController } from '../../presentation/controllers/AuthController';
-import { createAuthRoutes } from '../../presentation/routes/authRoutes';
+import { AuthController } from '../../adapters/controllers/AuthController';
+import { createAuthRoutes } from '../../adapters/routes/authRoutes';
 import { UserRole } from '../../domain/entities/User';
 
 describe('API Integration Tests', () => {

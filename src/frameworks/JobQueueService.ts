@@ -1,6 +1,6 @@
 import Queue from 'bull';
-import { IJobQueueService, JobData } from '../../domain/services/IJobQueueService';
-import { SubmissionResult, SubmissionStatus } from '../../domain/entities/Submission';
+import { IJobQueueService, JobData } from '../domain/services/IJobQueueService';
+import { SubmissionResult, SubmissionStatus } from '../domain/entities/Submission';
 
 export class JobQueueService implements IJobQueueService {
   private submissionQueue: Queue.Queue;

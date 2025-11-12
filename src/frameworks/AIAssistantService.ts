@@ -1,4 +1,4 @@
-import { IAIAssistantService, ChallengeSuggestion } from '../../domain/services/IAIAssistantService';
+import { IAIAssistantService, ChallengeSuggestion } from '../domain/services/IAIAssistantService';
 
 export class AIAssistantService implements IAIAssistantService {
   private readonly openaiApiKey: string;

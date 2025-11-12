@@ -17,39 +17,39 @@ const path_1 = __importDefault(require("path"));
 // Cargar variables de entorno
 dotenv_1.default.config();
 // Importar tus servicios, repositorios y rutas
-const Logger_1 = require("./infrastructure/services/Logger");
-const authRoutes_1 = require("./presentation/routes/authRoutes");
-const challengeRoutes_1 = require("./presentation/routes/challengeRoutes");
-const submissionRoutes_1 = require("./presentation/routes/submissionRoutes");
-const courseRoutes_1 = require("./presentation/routes/courseRoutes");
-const evaluationRoutes_1 = require("./presentation/routes/evaluationRoutes");
-const leaderboardRoutes_1 = require("./presentation/routes/leaderboardRoutes");
-const aiAssistantRoutes_1 = require("./presentation/routes/aiAssistantRoutes");
-const errorHandler_1 = require("./presentation/middleware/errorHandler");
-const auth_1 = require("./presentation/middleware/auth");
-const AuthService_1 = require("./infrastructure/services/AuthService");
-const JobQueueService_1 = require("./infrastructure/services/JobQueueService");
-const RunnerService_1 = require("./infrastructure/services/RunnerService");
-const AIAssistantService_1 = require("./infrastructure/services/AIAssistantService");
-const MongoUserRepository_1 = require("./infrastructure/repositories/MongoUserRepository");
-const MongoChallengeRepository_1 = require("./infrastructure/repositories/MongoChallengeRepository");
-const MockCourseRepository_1 = require("./infrastructure/repositories/MockCourseRepository");
-const MockSubmissionRepository_1 = require("./infrastructure/repositories/MockSubmissionRepository");
-const MockLeaderboardRepository_1 = require("./infrastructure/repositories/MockLeaderboardRepository");
-const MockEvaluationRepository_1 = require("./infrastructure/repositories/MockEvaluationRepository");
+const Logger_1 = require("./frameworks/Logger");
+const authRoutes_1 = require("./adapters/routes/authRoutes");
+const challengeRoutes_1 = require("./adapters/routes/challengeRoutes");
+const submissionRoutes_1 = require("./adapters/routes/submissionRoutes");
+const courseRoutes_1 = require("./adapters/routes/courseRoutes");
+const evaluationRoutes_1 = require("./adapters/routes/evaluationRoutes");
+const leaderboardRoutes_1 = require("./adapters/routes/leaderboardRoutes");
+const aiAssistantRoutes_1 = require("./adapters/routes/aiAssistantRoutes");
+const errorHandler_1 = require("./adapters/middleware/errorHandler");
+const auth_1 = require("./adapters/middleware/auth");
+const AuthService_1 = require("./frameworks/AuthService");
+const JobQueueService_1 = require("./frameworks/JobQueueService");
+const RunnerService_1 = require("./frameworks/RunnerService");
+const AIAssistantService_1 = require("./frameworks/AIAssistantService");
+const MongoUserRepository_1 = require("./adapters/repositories/MongoUserRepository");
+const MongoChallengeRepository_1 = require("./adapters/repositories/MongoChallengeRepository");
+const MockCourseRepository_1 = require("./adapters/repositories/MockCourseRepository");
+const MockSubmissionRepository_1 = require("./adapters/repositories/MockSubmissionRepository");
+const MockLeaderboardRepository_1 = require("./adapters/repositories/MockLeaderboardRepository");
+const MockEvaluationRepository_1 = require("./adapters/repositories/MockEvaluationRepository");
 const LoginUseCase_1 = require("./application/use-cases/auth/LoginUseCase");
 const RegisterUseCase_1 = require("./application/use-cases/auth/RegisterUseCase");
 const CreateChallengeUseCase_1 = require("./application/use-cases/challenges/CreateChallengeUseCase");
 const SubmitSolutionUseCase_1 = require("./application/use-cases/submissions/SubmitSolutionUseCase");
 const CreateCourseUseCase_1 = require("./application/use-cases/courses/CreateCourseUseCase");
 const CreateEvaluationUseCase_1 = require("./application/use-cases/evaluations/CreateEvaluationUseCase");
-const AuthController_1 = require("./presentation/controllers/AuthController");
-const ChallengeController_1 = require("./presentation/controllers/ChallengeController");
-const SubmissionController_1 = require("./presentation/controllers/SubmissionController");
-const CourseController_1 = require("./presentation/controllers/CourseController");
-const EvaluationController_1 = require("./presentation/controllers/EvaluationController");
-const LeaderboardController_1 = require("./presentation/controllers/LeaderboardController");
-const AIAssistantController_1 = require("./presentation/controllers/AIAssistantController");
+const AuthController_1 = require("./adapters/controllers/AuthController");
+const ChallengeController_1 = require("./adapters/controllers/ChallengeController");
+const SubmissionController_1 = require("./adapters/controllers/SubmissionController");
+const CourseController_1 = require("./adapters/controllers/CourseController");
+const EvaluationController_1 = require("./adapters/controllers/EvaluationController");
+const LeaderboardController_1 = require("./adapters/controllers/LeaderboardController");
+const AIAssistantController_1 = require("./adapters/controllers/AIAssistantController");
 const app = (0, express_1.default)();
 const logger = new Logger_1.Logger('Application');
 // 🧱 Middleware base
@@ -151,8 +151,8 @@ const swaggerOptions = {
         },
     },
     apis: [
-        path_1.default.join(__dirname, 'presentation/routes/*.js'),
-        path_1.default.join(__dirname, 'presentation/controllers/*.js'),
+        path_1.default.join(__dirname, 'adapters/routes/*.js'),
+        path_1.default.join(__dirname, 'adapters/controllers/*.js'),
     ],
 };
 const swaggerSpecs = (0, swagger_jsdoc_1.default)(swaggerOptions);

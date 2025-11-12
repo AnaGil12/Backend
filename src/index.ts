@@ -14,39 +14,39 @@ import path from 'path';
 dotenv.config();
 
 // Importar tus servicios, repositorios y rutas
-import { Logger } from './infrastructure/services/Logger';
-import { createAuthRoutes } from './presentation/routes/authRoutes';
-import { createChallengeRoutes } from './presentation/routes/challengeRoutes';
-import { createSubmissionRoutes } from './presentation/routes/submissionRoutes';
-import { createCourseRoutes } from './presentation/routes/courseRoutes';
-import { createEvaluationRoutes } from './presentation/routes/evaluationRoutes';
-import { createLeaderboardRoutes } from './presentation/routes/leaderboardRoutes';
-import { createAIAssistantRoutes } from './presentation/routes/aiAssistantRoutes';
-import { ErrorHandler } from './presentation/middleware/errorHandler';
-import { AuthMiddleware } from './presentation/middleware/auth';
-import { AuthService } from './infrastructure/services/AuthService';
-import { JobQueueService } from './infrastructure/services/JobQueueService';
-import { RunnerService } from './infrastructure/services/RunnerService';
-import { AIAssistantService } from './infrastructure/services/AIAssistantService';
-import { MongoUserRepository } from './infrastructure/repositories/MongoUserRepository';
-import { MongoChallengeRepository } from './infrastructure/repositories/MongoChallengeRepository';
-import { MockCourseRepository } from './infrastructure/repositories/MockCourseRepository';
-import { MockSubmissionRepository } from './infrastructure/repositories/MockSubmissionRepository';
-import { MockLeaderboardRepository } from './infrastructure/repositories/MockLeaderboardRepository';
-import { MockEvaluationRepository } from './infrastructure/repositories/MockEvaluationRepository';
+import { Logger } from './frameworks/Logger';
+import { createAuthRoutes } from './adapters/routes/authRoutes';
+import { createChallengeRoutes } from './adapters/routes/challengeRoutes';
+import { createSubmissionRoutes } from './adapters/routes/submissionRoutes';
+import { createCourseRoutes } from './adapters/routes/courseRoutes';
+import { createEvaluationRoutes } from './adapters/routes/evaluationRoutes';
+import { createLeaderboardRoutes } from './adapters/routes/leaderboardRoutes';
+import { createAIAssistantRoutes } from './adapters/routes/aiAssistantRoutes';
+import { ErrorHandler } from './adapters/middleware/errorHandler';
+import { AuthMiddleware } from './adapters/middleware/auth';
+import { AuthService } from './frameworks/AuthService';
+import { JobQueueService } from './frameworks/JobQueueService';
+import { RunnerService } from './frameworks/RunnerService';
+import { AIAssistantService } from './frameworks/AIAssistantService';
+import { MongoUserRepository } from './adapters/repositories/MongoUserRepository';
+import { MongoChallengeRepository } from './adapters/repositories/MongoChallengeRepository';
+import { MockCourseRepository } from './adapters/repositories/MockCourseRepository';
+import { MockSubmissionRepository } from './adapters/repositories/MockSubmissionRepository';
+import { MockLeaderboardRepository } from './adapters/repositories/MockLeaderboardRepository';
+import { MockEvaluationRepository } from './adapters/repositories/MockEvaluationRepository';
 import { LoginUseCase } from './application/use-cases/auth/LoginUseCase';
 import { RegisterUseCase } from './application/use-cases/auth/RegisterUseCase';
 import { CreateChallengeUseCase } from './application/use-cases/challenges/CreateChallengeUseCase';
 import { SubmitSolutionUseCase } from './application/use-cases/submissions/SubmitSolutionUseCase';
 import { CreateCourseUseCase } from './application/use-cases/courses/CreateCourseUseCase';
 import { CreateEvaluationUseCase } from './application/use-cases/evaluations/CreateEvaluationUseCase';
-import { AuthController } from './presentation/controllers/AuthController';
-import { ChallengeController } from './presentation/controllers/ChallengeController';
-import { SubmissionController } from './presentation/controllers/SubmissionController';
-import { CourseController } from './presentation/controllers/CourseController';
-import { EvaluationController } from './presentation/controllers/EvaluationController';
-import { LeaderboardController } from './presentation/controllers/LeaderboardController';
-import { AIAssistantController } from './presentation/controllers/AIAssistantController';
+import { AuthController } from './adapters/controllers/AuthController';
+import { ChallengeController } from './adapters/controllers/ChallengeController';
+import { SubmissionController } from './adapters/controllers/SubmissionController';
+import { CourseController } from './adapters/controllers/CourseController';
+import { EvaluationController } from './adapters/controllers/EvaluationController';
+import { LeaderboardController } from './adapters/controllers/LeaderboardController';
+import { AIAssistantController } from './adapters/controllers/AIAssistantController';
 
 const app = express();
 const logger = new Logger('Application');
@@ -160,8 +160,8 @@ const swaggerOptions = {
     },
   },
   apis: [
-    path.join(__dirname, 'presentation/routes/*.js'),
-    path.join(__dirname, 'presentation/controllers/*.js'),
+    path.join(__dirname, 'adapters/routes/*.js'),
+    path.join(__dirname, 'adapters/controllers/*.js'),
   ],
 };
 const swaggerSpecs = swaggerJsDoc(swaggerOptions);

@@ -3,7 +3,7 @@ import { ProcessSubmissionUseCase } from '../application/use-cases/submissions/P
 import { ISubmissionRepository } from '../domain/repositories/ISubmissionRepository';
 import { IRunnerService } from '../domain/services/IRunnerService';
 import { ILeaderboardRepository } from '../domain/repositories/ILeaderboardRepository';
-import { Logger } from '../infrastructure/services/Logger';
+import { Logger } from '../frameworks/Logger';
 
 class Worker {
   private submissionQueue: Queue.Queue;

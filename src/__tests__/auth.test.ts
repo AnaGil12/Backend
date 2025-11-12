@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { AuthService } from '../infrastructure/services/AuthService';
+import { AuthService } from '../frameworks/AuthService';
 import { UserRole } from '../domain/entities/User';
 
 describe('AuthService', () => {
